@@ -32,6 +32,12 @@ yarn-error.log*
 # env files (can opt-in for commiting if needed)
 .env*
 
+
+#config 
+.config*
+drizzle.config.js
+
+
 # vercel
 .vercel
 
