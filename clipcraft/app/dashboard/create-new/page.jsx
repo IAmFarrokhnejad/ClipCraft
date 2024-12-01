@@ -31,10 +31,19 @@ function CreateNew() {
     const result = await axios.post('/api/get-video-script', {
       prompt: prompt
     }).then(resp => {
-      console.log(resp.data.result);
       setVideoScript(resp.data.result);
+      GenerateAudioFile(resp.data.result);
     })
     setLoading(false)
+  }
+
+  const GenerateAudioFile = async (videoScriptData) => {
+    let script = '';
+    videoSciptData.forEach(item=>{
+      script = script+item.ContentText+' ';
+    })
+
+    console.log(script); //TEST THIS
   }
 
   return (

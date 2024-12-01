@@ -24,6 +24,7 @@
     "drizzle-orm": "^0.36.0",
     "lucide-react": "^0.453.0",
     "next": "15.0.1",
+    "playht": "^0.14.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwind-merge": "^2.5.4",
