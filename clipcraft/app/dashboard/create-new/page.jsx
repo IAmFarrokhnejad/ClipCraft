@@ -1,4 +1,5 @@
 "use client"
+import axios from "axios";
 import { useState } from "react"
 import SelectTopic from "./_components/SelectTopic"
 import SelectStyle from "./_components/SelectStyle";
@@ -26,25 +27,42 @@ function CreateNew() {
 
   //Get video script
   const getVideoScript = async () => {
-    setLoading(true)
-    const prompt = 'Write a script to generate a ' + formData.duration + ' video on the following topic: ' + formData.topic + ' along with AI image prompt in ' + formData.imageStyle + ' format for each scene and give the result in JSON format with imagePrompt and ContentText as field'
-    const result = await axios.post('/api/get-video-script', {
-      prompt: prompt
-    }).then(resp => {
-      setVideoScript(resp.data.result);
-      GenerateAudioFile(resp.data.result);
-    })
-    setLoading(false)
-  }
+    setLoading(true);
+    const prompt = `Write a script to generate a ${formData.duration} video on the following topic: ${formData.topic} along with AI image prompt in ${formData.imageStyle} format for each scene and give the result in JSON format with imagePrompt and ContentText as fields`;
 
-  const GenerateAudioFile = async (videoScriptData) => {
+    try {
+        const result = await axios.post("/api/get-video-script", { prompt });
+        console.log("API Response:", result.data); // Inspect the response structure
+        const videoScriptData = result.data.result;
+
+        if (!videoScriptData || !Array.isArray(videoScriptData)) {
+            console.error("Unexpected data structure:", videoScriptData);
+            return;
+        }
+        setVideoScript(videoScriptData);
+        GenerateAudioFile(videoScriptData);
+    } catch (error) {
+        console.error("Error generating video script:", error);
+    } finally {
+        setLoading(false);
+    }
+};
+
+
+const GenerateAudioFile = async (videoScriptData) => {
+    if (!videoScriptData || !Array.isArray(videoScriptData)) {
+        console.error("Invalid videoScriptData:", videoScriptData);
+        return;
+    }
+
     let script = '';
-    videoSciptData.forEach(item=>{
-      script = script+item.ContentText+' ';
-    })
+    videoScriptData.forEach(item => {
+        script = script + item.ContentText + ' ';
+    });
 
-    console.log(script); //TEST THIS
-  }
+    // Perform other actions with the generated script...
+    console.log("Generated script:", script);
+};
 
   return (
     <div className="md:px-20">
