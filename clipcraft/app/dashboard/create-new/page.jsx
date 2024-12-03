@@ -31,42 +31,42 @@ function CreateNew() {
     const prompt = `Write a script to generate a ${formData.duration} video on the following topic: ${formData.topic} along with AI image prompt in ${formData.imageStyle} format for each scene and give the result in JSON format with imagePrompt and ContentText as fields`;
 
     try {
-        const result = await axios.post("/api/get-video-script", { prompt });
-        console.log("Full API Response:", result); // Log the entire response
-        console.log("Response Data:", result.data); // Log the `data` field
+      const result = await axios.post("/api/get-video-script", { prompt });
+      console.log("Full API Response:", result); // Log the entire response
+      console.log("Response Data:", result.data); // Log the `data` field
 
-        const videoScriptData = result.data?.result;
-        if (!videoScriptData || !Array.isArray(videoScriptData)) {
-            console.error("Unexpected data structure:", videoScriptData);
-            return;
-        }
-
-        setVideoScript(videoScriptData);
-        GenerateAudioFile(videoScriptData);
-    } catch (error) {
-        console.error("Error generating video script:", error);
-    } finally {
-        setLoading(false);
-    }
-};
-
-
-
-
-const GenerateAudioFile = async (videoScriptData) => {
-    if (!videoScriptData || !Array.isArray(videoScriptData)) {
-        console.error("Invalid videoScriptData:", videoScriptData);
+      const videoScriptData = result.data?.result;
+      if (!videoScriptData || !Array.isArray(videoScriptData)) {
+        console.error("Unexpected data structure:", videoScriptData);
         return;
+      }
+
+      setVideoScript(videoScriptData);
+      GenerateAudioFile(videoScriptData);
+    } catch (error) {
+      console.error("Error generating video script:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
+
+  const GenerateAudioFile = async (videoScriptData) => {
+    if (!videoScriptData || !Array.isArray(videoScriptData)) {
+      console.error("Invalid videoScriptData:", videoScriptData);
+      return;
     }
 
     let script = '';
     videoScriptData.forEach(item => {
-        script = script + item.ContentText + ' ';
+      script = script + item.ContentText + ' ';
     });
 
     // Perform other actions with the generated script...
     console.log("Generated script:", script);
-};
+  };
 
   return (
     <div className="md:px-20">
