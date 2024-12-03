@@ -32,13 +32,15 @@ function CreateNew() {
 
     try {
         const result = await axios.post("/api/get-video-script", { prompt });
-        console.log("API Response:", result.data); // Inspect the response structure
-        const videoScriptData = result.data.result;
+        console.log("Full API Response:", result); // Log the entire response
+        console.log("Response Data:", result.data); // Log the `data` field
 
+        const videoScriptData = result.data?.result;
         if (!videoScriptData || !Array.isArray(videoScriptData)) {
             console.error("Unexpected data structure:", videoScriptData);
             return;
         }
+
         setVideoScript(videoScriptData);
         GenerateAudioFile(videoScriptData);
     } catch (error) {
@@ -47,6 +49,8 @@ function CreateNew() {
         setLoading(false);
     }
 };
+
+
 
 
 const GenerateAudioFile = async (videoScriptData) => {
