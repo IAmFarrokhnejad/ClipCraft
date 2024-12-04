@@ -6,12 +6,16 @@ import SelectStyle from "./_components/SelectStyle";
 import SelectDuration from "./_components/SelectDuration";
 import { Button } from "@/components/ui/button";
 import CustomLoading from "./_components/CustomLoading";
+import { v4 as uuidv4 } from 'uuid';
+
+const scriptData = 'It was a long day. I was exhausted after my shift so I decided to go to sleep as soon as I arrived home, however, my friend called me on my way home.'
 
 function CreateNew() {
 
   const [formData, setFormData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [videoScript, setVideoScript] = useState();
+  const [audioFileUrl, setAudioFileUrl] = useState();
 
   const onHandleInputChange = (fieldName, filedValue) => {
 
@@ -22,7 +26,9 @@ function CreateNew() {
   }
 
   const onCreateClickHandler = () => {
-    getVideoScript();
+    //getVideoScript();
+
+    GenerateAudioFile(scriptData);
   }
 
   //Get video script
@@ -60,12 +66,18 @@ function CreateNew() {
     }
 
     let script = '';
+    const id = uuidv4();
     videoScriptData.forEach(item => {
       script = script + item.ContentText + ' ';
     });
 
-    // Perform other actions with the generated script...
-    console.log("Generated script:", script);
+    await axios.post('/api/generate-audio', {
+      text: videoScriptData,
+      id: id
+    }).then(resp=>{
+      console.log(resp.data);
+      setAudioFileUrl(resp.data.result);
+    })
   };
 
   return (
