@@ -16,6 +16,7 @@ function CreateNew() {
   const [loading, setLoading] = useState(false);
   const [videoScript, setVideoScript] = useState();
   const [audioFileUrl, setAudioFileUrl] = useState();
+  const [captions, setCaptions] = useState();
 
   const onHandleInputChange = (fieldName, filedValue) => {
 
@@ -26,9 +27,9 @@ function CreateNew() {
   }
 
   const onCreateClickHandler = () => {
-    //getVideoScript();
-
+    getVideoScript();
     GenerateAudioFile(scriptData);
+    GenerateAudioCaption(fileUrl);
   }
 
   //Get video script
@@ -74,11 +75,24 @@ function CreateNew() {
     await axios.post('/api/generate-audio', {
       text: videoScriptData,
       id: id
-    }).then(resp=>{
+    }).then(resp => {
       console.log(resp.data);
       setAudioFileUrl(resp.data.result);
     })
   };
+
+  const GenerateAudioCaption = async(fileUrl) =>{
+    setLoading(true);
+
+    await axios.post('/api/generate-caption', {
+      audioFileUrl: fileUrl
+    }).then(resp =>{
+      console.log(resp.data.result);
+      setCaptions(resp?.data?.result);
+    })
+
+    setLoading(false)
+  }
 
   return (
     <div className="md:px-20">
