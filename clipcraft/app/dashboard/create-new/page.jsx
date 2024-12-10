@@ -1,120 +1,99 @@
-"use client"
+"use client";
 import axios from "axios";
-import { useState } from "react"
-import SelectTopic from "./_components/SelectTopic"
+import { useContext, useState } from "react";
+import SelectTopic from "./_components/SelectTopic";
 import SelectStyle from "./_components/SelectStyle";
 import SelectDuration from "./_components/SelectDuration";
 import { Button } from "@/components/ui/button";
 import CustomLoading from "./_components/CustomLoading";
-import { v4 as uuidv4 } from 'uuid';
-
-const scriptData = 'It was a long day. I was exhausted after my shift so I decided to go to sleep as soon as I arrived home, however, my friend called me on my way home.'
+import { v4 as uuidv4 } from "uuid";
+import { VideoDataContext } from "@/app/_context/VideoDataContext";
 
 function CreateNew() {
-
-  const [formData, setFormData] = useState([]);
+  const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(false);
-  const [videoScript, setVideoScript] = useState();
-  const [audioFileUrl, setAudioFileUrl] = useState();
-  const [captions, setCaptions] = useState();
+  const [videoScript, setVideoScript] = useState([]);
+  const [imageList, setImageList] = useState([]);
+  const [videoData, setVideoData] = useContext(VideoDataContext);
 
-  const onHandleInputChange = (fieldName, filedValue) => {
-
-    setFormData(prev => ({
+  const onHandleInputChange = (fieldName, fieldValue) => {
+    setFormData((prev) => ({
       ...prev,
-      [fieldName]: filedValue
-    }))
-  }
+      [fieldName]: fieldValue,
+    }));
+  };
 
-  const onCreateClickHandler = () => {
-    getVideoScript();
-    GenerateAudioFile(scriptData);
-    GenerateAudioCaption(fileUrl);
-  }
-
-  //Get video script
-  const getVideoScript = async () => {
+  const onCreateClickHandler = async () => {
     setLoading(true);
-    const prompt = `Write a script to generate a ${formData.duration} video on the following topic: ${formData.topic} along with AI image prompt in ${formData.imageStyle} format for each scene and give the result in JSON format with imagePrompt and ContentText as fields`;
-
     try {
-      const result = await axios.post("/api/get-video-script", { prompt });
-      console.log("Full API Response:", result); // Log the entire response
-      console.log("Response Data:", result.data); // Log the `data` field
+      const scriptData = await getVideoScript();
+      const fileUrl = await generateAudioFile(scriptData);
+      const captions = await generateAudioCaption(fileUrl);
+      const images = await generateImages(scriptData);
 
-      const videoScriptData = result.data?.result;
-      if (!videoScriptData || !Array.isArray(videoScriptData)) {
-        console.error("Unexpected data structure:", videoScriptData);
-        return;
-      }
-
-      setVideoScript(videoScriptData);
-      GenerateAudioFile(videoScriptData);
+      setVideoData({ videoScript: scriptData, audioFileUrl: fileUrl, captions, imageList: images });
     } catch (error) {
-      console.error("Error generating video script:", error);
+      console.error("Error creating video:", error);
     } finally {
       setLoading(false);
     }
   };
 
+  const getVideoScript = async () => {
+    const prompt = `Write a script to generate a ${formData.duration} video on the topic: ${formData.topic}, along with AI image prompts in ${formData.imageStyle} format for each scene. Return JSON with fields imagePrompt and ContentText.`;
 
-
-
-  const GenerateAudioFile = async (videoScriptData) => {
-    if (!videoScriptData || !Array.isArray(videoScriptData)) {
-      console.error("Invalid videoScriptData:", videoScriptData);
-      return;
+    const response = await axios.post("/api/get-video-script", { prompt });
+    const scriptData = response.data?.result;
+    if (!scriptData || !Array.isArray(scriptData)) {
+      throw new Error("Invalid script data.");
     }
-
-    let script = '';
-    const id = uuidv4();
-    videoScriptData.forEach(item => {
-      script = script + item.ContentText + ' ';
-    });
-
-    await axios.post('/api/generate-audio', {
-      text: videoScriptData,
-      id: id
-    }).then(resp => {
-      console.log(resp.data);
-      setAudioFileUrl(resp.data.result);
-    })
+    setVideoScript(scriptData);
+    return scriptData;
   };
 
-  const GenerateAudioCaption = async(fileUrl) =>{
-    setLoading(true);
+  const generateAudioFile = async (scriptData) => {
+    const id = uuidv4();
+    const scriptText = scriptData.map((item) => item.ContentText).join(" ");
+    const response = await axios.post("/api/generate-audio", { text: scriptText, id });
+    const fileUrl = response.data?.result;
+    if (!fileUrl) throw new Error("Audio file generation failed.");
+    return fileUrl;
+  };
 
-    await axios.post('/api/generate-caption', {
-      audioFileUrl: fileUrl
-    }).then(resp =>{
-      console.log(resp.data.result);
-      setCaptions(resp?.data?.result);
-    })
+  const generateAudioCaption = async (fileUrl) => {
+    const response = await axios.post("/api/generate-caption", { audioFileUrl: fileUrl });
+    const captions = response.data?.result;
+    if (!captions) throw new Error("Caption generation failed.");
+    return captions;
+  };
 
-    setLoading(false)
-  }
+  const generateImages = async (scriptData) => {
+    const images = [];
+    for (const { imagePrompt } of scriptData) {
+      try {
+        const response = await axios.post("/api/generate-image", { prompt: imagePrompt });
+        images.push(response.data?.result);
+      } catch (error) {
+        console.error("Error generating image:", error);
+      }
+    }
+    return images;
+  };
 
   return (
     <div className="md:px-20">
-      <h2 className="font-bold text-4xl text-primary  text-center">Create New</h2>
-
+      <h2 className="font-bold text-4xl text-primary text-center">Create New</h2>
       <div className="m-10 shadow-md p-10">
-
-        {/*Select Topic*/}
         <SelectTopic onUserSelect={onHandleInputChange} />
-
-        {/*Select Style*/}
         <SelectStyle onUserSelect={onHandleInputChange} />
-        {/*Duration*/}
         <SelectDuration onUserSelect={onHandleInputChange} />
-
-        {/*Create Button*/}
-        <Button className="mt-10 w-full" onClick={onCreateClickHandler}>Create Video</Button>
+        <Button className="mt-10 w-full" onClick={onCreateClickHandler} disabled={loading}>
+          Create Video
+        </Button>
       </div>
-
       <CustomLoading loading={loading} />
     </div>
-  )
+  );
 }
 
-export default CreateNew
+export default CreateNew;
