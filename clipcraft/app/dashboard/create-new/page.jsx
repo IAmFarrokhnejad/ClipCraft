@@ -1,6 +1,6 @@
 "use client";
 import axios from "axios";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import SelectTopic from "./_components/SelectTopic";
 import SelectStyle from "./_components/SelectStyle";
 import SelectDuration from "./_components/SelectDuration";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import CustomLoading from "./_components/CustomLoading";
 import { v4 as uuidv4 } from "uuid";
 import { VideoDataContext } from "@/app/_context/VideoDataContext";
+import { useUser } from "@clerk/nextjs";
 
 function CreateNew() {
   const [formData, setFormData] = useState({});
@@ -15,6 +16,7 @@ function CreateNew() {
   const [videoScript, setVideoScript] = useState([]);
   const [imageList, setImageList] = useState([]);
   const [videoData, setVideoData] = useContext(VideoDataContext);
+  const {user} = useUser();
 
   const onHandleInputChange = (fieldName, fieldValue) => {
     setFormData((prev) => ({
@@ -79,6 +81,29 @@ function CreateNew() {
     }
     return images;
   };
+
+  useEffect(() => {
+    console.log(videoData);
+    if(Object.keys(videoData).length==4){
+      SaveVideoData(videoData);
+    }
+
+  }, [videoData])
+
+  const SaveVideoData (videoData) => {
+    setLoading(true);
+
+    const result = await db.insert(VideoData).values({
+      script: videoData?.videoScript,
+      audioFileUrl: videoData?.audioFileUrl,
+      captions:videoData?.caption,
+      imageList:videoData?.imageList,
+      createdBy:user?.primaryEmailAddress?.emailAddress
+    }).returning({id:VideoData?.id})
+
+    console.log(result);
+    setLoading(false);
+  }
 
   return (
     <div className="md:px-20">
