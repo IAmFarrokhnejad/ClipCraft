@@ -9,6 +9,8 @@ import CustomLoading from "./_components/CustomLoading";
 import { v4 as uuidv4 } from "uuid";
 import { VideoDataContext } from "@/app/_context/VideoDataContext";
 import { useUser } from "@clerk/nextjs";
+import PlayerDialog from "../_components/PlayerDialog";
+
 
 function CreateNew() {
   const [formData, setFormData] = useState({});
@@ -16,7 +18,10 @@ function CreateNew() {
   const [videoScript, setVideoScript] = useState([]);
   const [imageList, setImageList] = useState([]);
   const [videoData, setVideoData] = useContext(VideoDataContext);
-  const {user} = useUser();
+  const { user } = useUser();
+  const [playVideo, setPlayVideo] = useState(false);
+  const [videoId, setVideoId] = useState();
+
 
   const onHandleInputChange = (fieldName, fieldValue) => {
     setFormData((prev) => ({
@@ -84,25 +89,27 @@ function CreateNew() {
 
   useEffect(() => {
     console.log(videoData);
-    if(Object.keys(videoData).length==4){
+    if (Object.keys(videoData).length == 4) {
       SaveVideoData(videoData);
     }
 
   }, [videoData])
 
-  const SaveVideoData (videoData) => {
+  const SaveVideoData = async (videoData) => {
     setLoading(true);
 
     const result = await db.insert(VideoData).values({
       script: videoData?.videoScript,
       audioFileUrl: videoData?.audioFileUrl,
-      captions:videoData?.caption,
-      imageList:videoData?.imageList,
-      createdBy:user?.primaryEmailAddress?.emailAddress
-    }).returning({id:VideoData?.id})
+      captions: videoData?.caption,
+      imageList: videoData?.imageList,
+      createdBy: user?.primaryEmailAddress?.emailAddress
+    }).returning({ id: VideoData?.id })
 
-    console.log(result);
+    setVideoId(result[0].id);
+    setPlayVideo(true);
     setLoading(false);
+
   }
 
   return (
@@ -117,6 +124,7 @@ function CreateNew() {
         </Button>
       </div>
       <CustomLoading loading={loading} />
+      <PlayerDialog playVideo={playVideo} videoId={videoId} />
     </div>
   );
 }
