@@ -1,14 +1,15 @@
 "use client"
 import { Button } from "@/components/ui/button"
-import { useEffect, useState } from "react"
+import { useContext, useEffect, useState } from "react"
 import EmptyState from "./_components/EmptyState";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 import VideoList from "./_components/VideoList";
 
+
 function Dashboard() {
 
-    const [videoList, setVideo] = useState([]);
+    const [videoList, setVideoList] = useState([]);
     const { user } = useUser();
 
     useEffect(() => {
@@ -36,7 +37,7 @@ function Dashboard() {
                 <EmptyState />
             </div>}
 
-            <VideoList videoList={videoList}/>
+            <VideoList videoList={videoList} />
 
         </div>
 

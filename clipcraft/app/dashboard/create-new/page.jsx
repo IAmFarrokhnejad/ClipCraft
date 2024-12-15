@@ -10,6 +10,9 @@ import { v4 as uuidv4 } from "uuid";
 import { VideoDataContext } from "@/app/_context/VideoDataContext";
 import { useUser } from "@clerk/nextjs";
 import PlayerDialog from "../_components/PlayerDialog";
+import { UserDetailContext } from "@/app/_context/UserDetailContext";
+import { toast } from "sonner";
+import { Users } from "@/configs/schema";
 
 
 
@@ -19,6 +22,7 @@ function CreateNew() {
   const [videoScript, setVideoScript] = useState([]);
   const [imageList, setImageList] = useState([]);
   const [videoData, setVideoData] = useContext(VideoDataContext);
+  const [userDetail, setUserDetail] = useContext(UserDetailContext);
   const { user } = useUser();
   const [playVideo, setPlayVideo] = useState(false);
   const [videoId, setVideoId] = useState();
@@ -34,6 +38,10 @@ function CreateNew() {
   const onCreateClickHandler = async () => {
     setLoading(true);
     try {
+      if (!userDetail?.credits >= 0) {
+        toast("Credits Insufficient!")
+        return;
+      } 
       const scriptData = await getVideoScript();
       const fileUrl = await generateAudioFile(scriptData);
       const captions = await generateAudioCaption(fileUrl);
@@ -106,12 +114,23 @@ function CreateNew() {
       imageList: videoData?.imageList,
       createdBy: user?.primaryEmailAddress?.emailAddress
     }).returning({ id: VideoData?.id })
-
+    await UpdateUserCredits();
     setVideoId(result[0].id);
     setPlayVideo(true);
     setLoading(false);
 
   }
+
+  const UpdateUserCredits = async () => {
+    const result = await db.update(Users).set({
+      credits: UserDetail?.credits - 10
+    }).where(eq(Users?.email, user?.primaryEmailAddress?.emailAddress));
+    setUserDetail(prev => ({
+      ...prev,
+      "credits": userDetail?.credits - 10
+    }))
+  }
+
 
   return (
     <div className="md:px-20">
