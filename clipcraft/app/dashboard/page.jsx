@@ -1,11 +1,26 @@
 "use client"
 import { Button } from "@/components/ui/button"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import EmptyState from "./_components/EmptyState";
 import Link from "next/link";
+import { useUser } from "@clerk/nextjs";
+import VideoList from "./_components/VideoList";
 
 function Dashboard() {
+
     const [videoList, setVideo] = useState([]);
+    const { user } = useUser();
+
+    useEffect(() => {
+        user && GetVideoList();
+    }, [user])
+
+    const GetVideoList = async () => {
+        const result = await db.select().from(videoData).where(eq(VideoData?.createdBy, user?.primaryEmailAddress?.emailAddress));
+
+        setVideoList(result);
+    }
+
     return (
         <div>
             <div className="flex justify-between items-center">
@@ -20,6 +35,9 @@ function Dashboard() {
             {videoList?.length == 0 && <div>
                 <EmptyState />
             </div>}
+
+            <VideoList videoList={videoList}/>
+
         </div>
 
     )
